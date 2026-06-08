@@ -1,0 +1,9 @@
+Flask==3.0.0
+Werkzeug==3.0.0
+pandas==2.0.3
+numpy==1.24.3
+scipy==1.11.2
+pymavlink==2.4.39
+chromadb==0.3.21
+requests==2.31.0
+gunicorn==21.2.0

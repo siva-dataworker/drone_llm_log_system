@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dronelog AI - Flight Analysis & Q&A</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { color-scheme: dark; }
+        body { background-color: #0a0a0a; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .report-card {
+            background-color: #1a1a1a;
+            border-color: #333333;
+            color: #e0e0e0;
+        }
+        .report-card:hover {
+            background-color: #222222;
+            border-left-color: #ff9f43;
+            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.15);
+        }
+        .report-card.selected {
+            background-color: #2a1f0f;
+            border-left-color: #ff9f43;
+            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.25);
+        }
+
+        .fault-badge {
+            @apply inline-block px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2;
+        }
+        .fault-high { background-color: #3d2626; color: #ff6b6b; }
+        .fault-medium { background-color: #3d3222; color: #ffa500; }
+        .fault-low { background-color: #2d3a3f; color: #ff9f43; }
+
+        .tab-btn {
+            border-bottom-color: transparent;
+            color: #888888;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover {
+            color: #ff9f43;
+        }
+        .tab-btn.active {
+            color: #ff9f43;
+            border-bottom-color: #ff9f43;
+        }
+
+        input, textarea {
+            background-color: #1a1a1a !important;
+            color: #e0e0e0 !important;
+            border-color: #333333 !important;
+        }
+        input:focus, textarea:focus {
+            background-color: #222222 !important;
+            border-color: #ff9f43 !important;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.1) !important;
+        }
+
+        button {
+            transition: all 0.3s;
+        }
+        .bg-blue-600 {
+            background-color: #ff9f43 !important;
+            color: #000000 !important;
+        }
+        .bg-blue-600:hover {
+            background-color: #3fb870 !important;
+            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.25) !important;
+        }
+
+        .chat-bubble-user {
+            background-color: #2d5f3f;
+            color: #ff9f43;
+        }
+        .chat-bubble-ai {
+            background-color: #1a2e2e;
+            color: #e0e0e0;
+            border-left: 3px solid #ff9f43;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-black shadow-lg" style="border-bottom: 2px solid #ff9f43;">
+        <div class="max-w-7xl mx-auto px-6 py-6">
+            <h1 class="text-3xl font-bold" style="color: #ff9f43;">🚁 Dronelog AI</h1>
+            <p class="text-gray-500 mt-2">ArduPilot Flight Log Analysis & Intelligent Q&A</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Tab Navigation -->
+        <div class="flex gap-4 mb-8" style="border-bottom: 1px solid #333333;">
+            <button class="tab-btn active px-6 py-3 font-semibold"
+                    data-tab="upload">
+                📤 Upload & Analyze .bin
+            </button>
+            <button class="tab-btn px-6 py-3 font-semibold"
+                    data-tab="qa">
+                💬 Q&A & Compare Reports
+            </button>
+        </div>
+
+        <!-- ====== UPLOAD TAB ====== -->
+        <div id="upload" class="tab-content active">
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Upload Section -->
+                <div class="col-span-2">
+                    <div style="background-color: #1a1a1a; border: 1px solid #333333;" class="rounded-lg shadow-lg p-8">
+                        <h2 class="text-2xl font-bold mb-6" style="color: #ff9f43;">Upload Flight Log</h2>
+
+                        <!-- File Upload -->
+                        <div class="mb-6">
+                            <div style="background-color: #0a0a0a; border: 2px dashed #ff9f43;" class="rounded-lg p-8 text-center cursor-pointer transition" id="dropzone">
+                                <svg class="mx-auto h-12 w-12" stroke="#ff9f43" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20a4 4 0 004 4h24a4 4 0 004-4V20m-2-10l-8.5-8.5a2 2 0 00-2.83 0l-8.5 8.5m8.5-2v20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <p class="mt-4 text-lg font-medium" style="color: #ff9f43;">Drag & drop your <code style="background-color: #222222; color: #ff9f43;" class="px-2 py-1">.bin</code> file</p>
+                                <p class="text-sm text-gray-500 mt-2">or click to select</p>
+                                <input type="file" id="fileInput" accept=".bin" class="hidden">
+                            </div>
+                        </div>
+
+                        <!-- Upload Button -->
+                        <button id="uploadBtn" class="w-full text-black font-bold py-3 px-6 rounded-lg transition disabled:bg-gray-600" style="background-color: #ff9f43;"
+                                disabled>
+                            🚀 Upload & Process
+                        </button>
+
+                        <!-- Progress Bar -->
+                        <div id="progressContainer" class="mt-6 hidden">
+                            <div style="background-color: #333333;" class="rounded-full h-2 overflow-hidden">
+                                <div id="progressBar" style="background-color: #ff9f43;" class="h-full transition-all" style="width: 0%"></div>
+                            </div>
+                            <p id="progressText" class="text-sm text-gray-500 mt-2 text-center">Uploading...</p>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="uploadError" class="mt-6 hidden" style="background-color: #3d2626; border: 1px solid #ff6b6b; color: #ff6b6b;" class="px-4 py-3 rounded">
+                            <p id="uploadErrorMsg"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fleet Summary -->
+                <div style="background-color: #1a1a1a; border: 1px solid #333333;" class="rounded-lg shadow-lg p-8">
+                    <h3 class="text-xl font-bold mb-6" style="color: #ff9f43;">📊 Fleet Summary</h3>
+                    <div id="fleetSummary" class="space-y-4">
+                        <div class="text-center">
+                            <p class="text-3xl font-bold" style="color: #ff9f43;">--</p>
+                            <p class="text-sm text-gray-500">Total Flights</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold" style="color: #ffa500;">--</p>
+                            <p class="text-sm text-gray-500">Avg Faults/Flight</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold" style="color: #9d4edd;">--</p>
+                            <p class="text-sm text-gray-500">Avg Flight Duration</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Result -->
+            <div id="resultContainer" class="mt-8 hidden">
+                <div style="background-color: #1a1a1a; border: 1px solid #333333;" class="rounded-lg shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6" style="color: #ff9f43;">✅ Analysis Complete</h2>
+
+                    <!-- Flight Info -->
+                    <div style="background-color: #1a3a28; border: 1px solid #ff9f43;" class="rounded-lg p-4 mb-6">
+                        <p class="text-sm text-gray-300"><span class="font-semibold" style="color: #ff9f43;">Flight ID:</span> <code id="resultFlightId" style="background-color: #0a0a0a; color: #ff9f43;" class="px-2 py-1">--</code></p>
+                        <p class="text-sm text-gray-300"><span class="font-semibold" style="color: #ff9f43;">File:</span> <span id="resultFilename">--</span></p>
+                    </div>
+
+                    <!-- Faults -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3" style="color: #ff9f43;">🔴 Detected Faults</h3>
+                        <div id="faultsList" class="space-y-3"></div>
+                    </div>
+
+                    <!-- LLM Report -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3" style="color: #ff9f43;">📋 Maintenance Report</h3>
+                        <div id="reportText" style="background-color: #0a0a0a; border: 1px solid #333333; color: #e0e0e0;" class="rounded-lg p-4 text-sm whitespace-pre-wrap max-h-96 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- Features -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">📊 Extracted Features</h3>
+                        <div id="featuresList" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== Q&A TAB ====== -->
+        <div id="qa" class="tab-content">
+            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; height: calc(100vh - 200px);">
+                <!-- Reports Sidebar -->
+                <div style="background-color: #1a1a1a; border: 1px solid #333333;" class="rounded-lg shadow-lg overflow-hidden flex flex-col">
+                    <div style="background-color: #0a0a0a; border-bottom: 1px solid #333333;" class="p-4 flex-shrink-0">
+                        <h3 class="font-bold" style="color: #ff9f43;">📝 Flight Reports</h3>
+                        <p class="text-xs text-gray-500 mt-1">Click to view details</p>
+                    </div>
+                    <div id="reportsList" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+                </div>
+
+                <!-- Chat Area -->
+                <div style="background-color: #1a1a1a; border: 1px solid #333333;" class="rounded-lg shadow-lg flex flex-col">
+                    <!-- Report Detail -->
+                    <div id="reportDetail" style="background-color: #0a0a0a; border-bottom: 1px solid #333333;" class="p-6 flex-shrink-0 overflow-y-auto max-h-32 hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold" style="color: #ff9f43;" id="detailFlightId">Select a report</h3>
+                                <p class="text-sm text-gray-500" id="detailTimestamp">--</p>
+                            </div>
+                            <button id="closeDetailBtn" class="text-gray-500 hover:text-orange-500">✕</button>
+                        </div>
+
+                        <div id="detailFaults" class="mb-4"></div>
+                        <div id="detailReport" style="background-color: #0a0a0a; color: #e0e0e0; border: 1px solid #333333;" class="p-3 rounded text-sm max-h-20 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- Chat History -->
+                    <div id="chatHistory" class="flex-1 overflow-y-auto p-6 space-y-4" style="background-color: #0a0a0a;"></div>
+
+                    <!-- Chat Input - Fixed at Bottom -->
+                    <div style="background-color: #0a0a0a; border-top: 1px solid #333333;" class="p-6 flex-shrink-0">
+                        <div class="flex gap-2">
+                            <input type="text" id="chatInput" placeholder="Ask about maintenance issues, comparisons, patterns..."
+                                   style="background-color: #1a1a1a; color: #e0e0e0; border: 1px solid #333333;" class="flex-1 rounded-lg px-4 py-3 placeholder-gray-600">
+                            <button id="sendBtn" class="text-black font-bold py-3 px-6 rounded-lg transition" style="background-color: #ff9f43; hover: #ff8c42;">
+                                Send
+                            </button>
+                        </div>
+                        <p id="chatError" class="text-sm mt-2 hidden" style="color: #ff6b6b;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
