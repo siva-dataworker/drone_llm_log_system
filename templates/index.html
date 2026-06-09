@@ -262,22 +262,24 @@
             display: grid !important;
             grid-template-columns: 350px 1fr;
             gap: 1.5rem;
-            height: calc(100vh - 200px);
+            min-height: calc(100vh - 200px);
         }
 
         @media (max-width: 1024px) {
             #qa-container {
                 grid-template-columns: 300px 1fr !important;
-                height: calc(100vh - 180px) !important;
+                min-height: calc(100vh - 180px) !important;
             }
         }
 
         @media (max-width: 768px) {
             #qa-container {
                 grid-template-columns: 1fr !important;
+                min-height: auto !important;
                 height: auto !important;
                 gap: 1rem !important;
-                display: block !important;
+                display: flex !important;
+                flex-direction: column !important;
             }
 
             #qa-container > div {
