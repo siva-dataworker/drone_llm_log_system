@@ -2,9 +2,18 @@
 // DRONELOG AI - FRONTEND LOGIC
 // ════════════════════════════════════════════════════════
 
+console.log("main.js loaded!");
+
 // ──── STATE ────────────────────────────────────────────
 let currentFlightId = null;
 let uploadedFile = null;
+
+// Get upload elements immediately
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+
+console.log("Elements found:", { dropzone: !!dropzone, fileInput: !!fileInput, uploadBtn: !!uploadBtn });
 
 // ──── TAB SWITCHING ────────────────────────────────────
 document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -32,54 +41,87 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 
 // ──── UPLOAD SECTION ────────────────────────────────────
 
-const dropzone = document.getElementById("dropzone");
-const fileInput = document.getElementById("fileInput");
-const uploadBtn = document.getElementById("uploadBtn");
-
 // Drag & drop
-dropzone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropzone.classList.add("bg-blue-50");
-});
+if (dropzone) {
+    dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.style.backgroundColor = "#fffaf5";
+    });
 
-dropzone.addEventListener("dragleave", () => {
-    dropzone.classList.remove("bg-blue-50");
-});
+    dropzone.addEventListener("dragleave", () => {
+        dropzone.style.backgroundColor = "#ffffff";
+    });
 
-dropzone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("bg-blue-50");
-    handleFiles(e.dataTransfer.files);
-});
+    dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.style.backgroundColor = "#ffffff";
+        handleFiles(e.dataTransfer.files);
+    });
 
-dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("click", () => {
+        if (fileInput) fileInput.click();
+    });
+    console.log("Dropzone listeners attached");
+} else {
+    console.error("Dropzone not found!");
+}
 
-fileInput.addEventListener("change", (e) => {
-    handleFiles(e.target.files);
-});
+if (fileInput) {
+    fileInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files);
+    });
+    console.log("FileInput listener attached");
+} else {
+    console.error("FileInput not found!");
+}
 
 function handleFiles(files) {
+    console.log("handleFiles called with", files.length, "files");
     if (files.length === 0) return;
 
     const file = files[0];
+    console.log("File selected:", file.name);
 
     if (!file.name.endsWith(".bin")) {
+        console.warn("File is not .bin:", file.name);
         showUploadError("Only .bin files allowed");
         return;
     }
 
     uploadedFile = file;
-    uploadBtn.disabled = false;
-    uploadBtn.textContent = `📤 Ready: ${file.name}`;
+    if (uploadBtn) {
+        uploadBtn.disabled = false;
+        uploadBtn.style.backgroundColor = "#ff9f43";
+        uploadBtn.style.color = "#000000";
+        uploadBtn.textContent = `📤 Ready: ${file.name}`;
+        console.log("Button enabled and updated");
+    } else {
+        console.error("uploadBtn not found!");
+    }
 }
 
-uploadBtn.addEventListener("click", uploadAndAnalyze);
+if (uploadBtn) {
+    uploadBtn.addEventListener("click", () => {
+        console.log("Upload button clicked!");
+        console.log("uploadedFile:", uploadedFile);
+        if (!uploadedFile) {
+            alert("Please select a file first");
+            return;
+        }
+        alert("Upload started! Please wait...");
+        uploadAndAnalyze();
+    });
+    console.log("Upload button listener attached");
+} else {
+    console.error("Upload button not found!");
+}
 
 async function uploadAndAnalyze() {
     if (!uploadedFile) return;
 
     uploadBtn.disabled = true;
-    document.getElementById("uploadError").classList.add("hidden");
+    document.getElementById("uploadError").style.display = "none";
+    document.getElementById("loadingIndicator").style.display = "block";
 
     const formData = new FormData();
     formData.append("file", uploadedFile);
@@ -88,8 +130,10 @@ async function uploadAndAnalyze() {
     const progressContainer = document.getElementById("progressContainer");
     const progressBar = document.getElementById("progressBar");
     const progressText = document.getElementById("progressText");
+    const loadingStatus = document.getElementById("loadingStatus");
 
-    progressContainer.classList.remove("hidden");
+    progressContainer.style.display = "block";
+    loadingStatus.textContent = "📤 Uploading file...";
 
     try {
         const xhr = new XMLHttpRequest();
@@ -103,22 +147,41 @@ async function uploadAndAnalyze() {
         });
 
         xhr.addEventListener("load", () => {
+            console.log("XHR load event, status:", xhr.status);
+            console.log("Response text:", xhr.responseText);
             if (xhr.status === 200) {
-                const result = JSON.parse(xhr.responseText);
-                displayAnalysisResult(result);
-                uploadedFile = null;
-                uploadBtn.disabled = true;
-                uploadBtn.textContent = "📤 Upload & Process";
-                progressContainer.classList.add("hidden");
-                progressBar.style.width = "0%";
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    console.log("Parsed result:", result);
+                    loadingStatus.textContent = "✅ Upload complete! Processing results...";
+                    setTimeout(() => {
+                        document.getElementById("loadingIndicator").style.display = "none";
+                        displayAnalysisResult(result);
+                        uploadedFile = null;
+                        uploadBtn.disabled = true;
+                        uploadBtn.textContent = "📤 Upload & Process";
+                        progressContainer.style.display = "none";
+                        progressBar.style.width = "0%";
+                    }, 500);
+                } catch (e) {
+                    console.error("Failed to parse response:", e);
+                    showUploadError("Failed to parse response: " + e.message);
+                }
             } else {
-                const error = JSON.parse(xhr.responseText);
-                showUploadError(error.error);
+                console.error("Upload failed with status:", xhr.status);
+                document.getElementById("loadingIndicator").style.display = "none";
+                try {
+                    const error = JSON.parse(xhr.responseText);
+                    showUploadError(error.error);
+                } catch (e) {
+                    showUploadError("Upload failed with status " + xhr.status);
+                }
                 uploadBtn.disabled = false;
             }
         });
 
         xhr.addEventListener("error", () => {
+            document.getElementById("loadingIndicator").style.display = "none";
             showUploadError("Network error during upload");
             uploadBtn.disabled = false;
         });
@@ -127,12 +190,15 @@ async function uploadAndAnalyze() {
         xhr.send(formData);
 
     } catch (error) {
+        document.getElementById("loadingIndicator").style.display = "none";
         showUploadError("Upload failed: " + error.message);
         uploadBtn.disabled = false;
     }
 }
 
 function displayAnalysisResult(result) {
+    console.log("displayAnalysisResult called with:", result);
+
     const resultContainer = document.getElementById("resultContainer");
     const resultFlightId = document.getElementById("resultFlightId");
     const resultFilename = document.getElementById("resultFilename");
@@ -140,23 +206,42 @@ function displayAnalysisResult(result) {
     const reportText = document.getElementById("reportText");
     const featuresList = document.getElementById("featuresList");
 
+    console.log("Elements found:", {
+        resultContainer: !!resultContainer,
+        resultFlightId: !!resultFlightId,
+        resultFilename: !!resultFilename,
+        faultsList: !!faultsList,
+        reportText: !!reportText,
+        featuresList: !!featuresList
+    });
+
     // Flight info
-    resultFlightId.textContent = result.flight_id;
-    resultFilename.textContent = result.original_filename;
+    if (resultFlightId) {
+        resultFlightId.textContent = result.flight_id;
+        console.log("Set Flight ID:", result.flight_id);
+    }
+    if (resultFilename) {
+        resultFilename.textContent = result.original_filename;
+        console.log("Set Filename:", result.original_filename);
+    }
 
     // Faults
-    faultsList.innerHTML = "";
+    if (faultsList) {
+        faultsList.innerHTML = "";
+    } else {
+        console.error("faultsList element not found!");
+    }
     if (result.faults.length === 0) {
-        faultsList.innerHTML = '<p class="text-orange-500 font-semibold">✅ No faults detected</p>';
+        faultsList.innerHTML = '<p style="color: #0d6b0d; font-weight: 600;">✅ No faults detected</p>';
     } else {
         result.faults.forEach(fault => {
             const severityClass = `fault-${fault.severity.toLowerCase()}`;
             faultsList.innerHTML += `
-                <div class="border-l-4 border-gray-300 pl-4 py-2">
-                    <p class="font-semibold text-gray-800">${fault.type}</p>
-                    <p class="text-sm text-gray-600">${fault.description}</p>
+                <div style="border-left: 4px solid #ff9f43; padding-left: 1rem; padding-top: 0.5rem; padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                    <p style="font-weight: 600; color: #000000;">${fault.type}</p>
+                    <p style="font-size: 0.875rem; color: #333333;">${fault.description}</p>
                     <span class="fault-badge ${severityClass}">${fault.severity}</span>
-                    <p class="text-xs text-gray-500 mt-1"><strong>Action:</strong> ${fault.recommended_action}</p>
+                    <p style="font-size: 0.75rem; color: #666666; margin-top: 0.25rem;"><strong>Action:</strong> ${fault.recommended_action}</p>
                 </div>
             `;
         });
@@ -170,15 +255,34 @@ function displayAnalysisResult(result) {
     Object.entries(result.features).forEach(([key, value]) => {
         const displayName = key.replace(/_/g, " ").toUpperCase();
         featuresList.innerHTML += `
-            <div class="bg-gray-50 p-3 rounded">
-                <p class="text-xs text-gray-600">${displayName}</p>
-                <p class="text-lg font-bold text-blue-600">${typeof value === "number" ? value.toFixed(3) : value}</p>
+            <div style="background-color: #fffaf5; padding: 0.75rem; border-radius: 8px; border: 1px solid #ff9f43;">
+                <p style="font-size: 0.75rem; color: #666666;">${displayName}</p>
+                <p style="font-size: 1.125rem; font-weight: bold; color: #ff9f43;">${typeof value === "number" ? value.toFixed(3) : value}</p>
             </div>
         `;
     });
 
-    resultContainer.classList.remove("hidden");
-    document.getElementById("uploadError").classList.add("hidden");
+    if (resultContainer) {
+        resultContainer.style.display = "block";
+        resultContainer.style.visibility = "visible";
+        console.log("resultContainer displayed:", resultContainer.style.display);
+    } else {
+        console.error("resultContainer element not found!");
+    }
+
+    const errorDiv = document.getElementById("uploadError");
+    if (errorDiv) errorDiv.style.display = "none";
+
+    // Show success alert
+    alert("✅ Analysis complete! Results showing below.");
+
+    // Scroll to result container
+    if (resultContainer) {
+        setTimeout(() => {
+            resultContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+            console.log("Scrolled to resultContainer");
+        }, 300);
+    }
 
     // Reload reports in Q&A tab
     loadReports();
@@ -187,7 +291,7 @@ function displayAnalysisResult(result) {
 function showUploadError(message) {
     const errorDiv = document.getElementById("uploadError");
     document.getElementById("uploadErrorMsg").textContent = message;
-    errorDiv.classList.remove("hidden");
+    errorDiv.style.display = "block";
 }
 
 // ──── Q&A SECTION ────────────────────────────────────
@@ -198,89 +302,84 @@ async function loadReports() {
 
     try {
         const response = await fetch("/api/reports?limit=50");
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
         const data = await response.json();
 
         reportsList.innerHTML = "";
 
-        if (!data.success || !data.reports || data.reports.length === 0) {
+        if (!data.success || data.reports.length === 0) {
             reportsList.innerHTML = '<p class="text-gray-500 text-sm">No reports yet. Upload a flight to get started.</p>';
             return;
         }
 
-        data.reports.forEach(report => {
+        data.reports.forEach((report, index) => {
             const card = document.createElement("div");
             card.className = "report-card";
-            card.dataset.flightId = report.flight_id;
             card.style.cursor = "pointer";
-
+            card.style.transition = "all 0.3s";
+            card.style.border = "2px solid #ff9f43";
+            card.style.borderRadius = "8px";
+            card.style.padding = "1rem";
+            card.style.backgroundColor = "#ffffff";
+            card.id = `report-${report.flight_id}`;
             card.innerHTML = `
-                <p class="font-semibold text-sm text-gray-800">${escapeHtml(report.flight_id)}</p>
-                <p class="text-xs text-gray-600">${new Date(report.timestamp).toLocaleString()}</p>
-                <p class="text-xs text-blue-600 mt-1">🔴 ${report.fault_count} fault${report.fault_count !== 1 ? "s" : ""}</p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <p style="font-weight: 600; font-size: 0.875rem; color: #000000;">${report.flight_id}</p>
+                        <p style="font-size: 0.75rem; color: #666666;">${new Date(report.timestamp).toLocaleString()}</p>
+                        <p style="font-size: 0.75rem; color: #ff9f43; margin-top: 0.25rem;">🔴 ${report.fault_count} fault${report.fault_count !== 1 ? "s" : ""}</p>
+                    </div>
+                    <div style="font-size: 1.5rem; color: #ff9f43; display: none;" class="selection-badge">✓</div>
+                </div>
             `;
 
-            // Attach click handler
-            const handleClick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+            // Attach click handler with explicit function
+            const handleCardClick = function() {
+                console.log("🔥 CARD CLICKED:", report.flight_id);
 
-                // Remove selected from all cards
-                document.querySelectorAll(".report-card").forEach(c => c.classList.remove("selected"));
-                // Add selected to clicked card
+                // Remove selection from all cards
+                document.querySelectorAll(".report-card").forEach(c => {
+                    c.classList.remove("selected");
+                    const badge = c.querySelector(".selection-badge");
+                    if (badge) {
+                        badge.style.display = "none";
+                    }
+                });
+
+                // Add selected class to this card
                 card.classList.add("selected");
+                const badge = card.querySelector(".selection-badge");
+                if (badge) {
+                    badge.style.display = "block";
+                    console.log("✅ Badge shown for:", report.flight_id);
+                }
 
-                // Call view function
+                console.log("📍 Calling viewReportDetail for:", report.flight_id);
                 viewReportDetail(report.flight_id);
             };
 
-            card.addEventListener("click", handleClick, false);
-
-            // Also handle touch for mobile
-            card.addEventListener("touchend", handleClick, false);
-
+            card.addEventListener("click", handleCardClick);
+            console.log(`✅ Click listener attached to card ${index}:`, report.flight_id);
             reportsList.appendChild(card);
         });
-
-        console.log(`Loaded ${data.reports.length} flight reports`);
-
     } catch (error) {
-        console.error("Error loading reports:", error);
-        reportsList.innerHTML = `<p class="text-red-600 text-sm">Error: ${escapeHtml(error.message)}</p>`;
+        reportsList.innerHTML = `<p class="text-red-600 text-sm">Error loading reports: ${error.message}</p>`;
     }
 }
 
 async function viewReportDetail(flightId) {
-    if (!flightId) {
-        console.error("No flight ID provided");
-        return;
-    }
-
+    console.log("viewReportDetail called for:", flightId);
     currentFlightId = flightId;
     const detailDiv = document.getElementById("reportDetail");
 
     try {
-        console.log(`Loading report for flight: ${flightId}`);
-
         const response = await fetch(`/api/report/${flightId}`);
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
         const data = await response.json();
+        console.log("Flight data loaded:", data);
 
         if (!data.success) {
-            console.error("API returned error:", data.error);
-            alert("Error loading report: " + (data.error || "Unknown error"));
+            alert("Error loading report: " + data.error);
             return;
         }
-
-        console.log("Report loaded successfully:", data.flight_id);
 
         // Display report details
         document.getElementById("detailFlightId").textContent = data.flight_id;
@@ -288,40 +387,57 @@ async function viewReportDetail(flightId) {
 
         const detailFaults = document.getElementById("detailFaults");
         detailFaults.innerHTML = "";
-
-        if (data.faults && data.faults.length > 0) {
+        if (data.faults.length > 0) {
             data.faults.forEach(fault => {
                 const severityClass = `fault-${fault.severity.toLowerCase()}`;
-                const faultHtml = `
-                    <span class="fault-badge ${severityClass}">
-                        ${escapeHtml(fault.type)} (${fault.severity})
-                    </span>
+                detailFaults.innerHTML += `
+                    <span class="fault-badge ${severityClass}">${fault.type} (${fault.severity})</span>
                 `;
-                detailFaults.innerHTML += faultHtml;
             });
         } else {
-            detailFaults.innerHTML = '<p class="text-orange-500 text-sm">✅ No faults detected</p>';
+            detailFaults.innerHTML = '<p style="color: #0d6b0d; font-weight: 600;">✅ No faults detected</p>';
         }
 
-        // Clean up report text (remove markdown)
-        let reportText = data.report || "";
-        reportText = reportText
-            .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove **bold**
-            .replace(/###\s/g, '')               // Remove ### headers
-            .replace(/##\s/g, '')                // Remove ## headers
-            .replace(/#\s/g, '');                // Remove # headers
-
-        document.getElementById("detailReport").textContent = reportText;
+        document.getElementById("detailReport").textContent = data.report;
         detailDiv.classList.remove("hidden");
 
-        // Clear chat history when switching flights
-        document.getElementById("chatHistory").innerHTML = "";
-        document.getElementById("chatInput").value = "";
-        document.getElementById("chatError").classList.add("hidden");
+        // Display selected flight in chat box
+        const chatHistory = document.getElementById("chatHistory");
+        console.log("Chat history element:", chatHistory);
+
+        const flightCard = document.createElement("div");
+        flightCard.style.backgroundColor = "#fff4e6";
+        flightCard.style.border = "2px solid #ff9f43";
+        flightCard.style.borderRadius = "8px";
+        flightCard.style.padding = "1rem";
+        flightCard.style.marginBottom = "1rem";
+        flightCard.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <p style="font-weight: 600; color: #ff9f43; font-size: 0.95rem;">📌 Selected Flight</p>
+                    <p style="color: #000000; font-weight: 600; margin-top: 0.25rem;">${data.flight_id}</p>
+                    <p style="color: #666666; font-size: 0.875rem; margin-top: 0.25rem;">${new Date(data.timestamp).toLocaleString()}</p>
+                </div>
+                <button style="background-color: #ff9f43; color: #000000; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; font-weight: bold;">✕</button>
+            </div>
+        `;
+
+        // Add close button handler
+        flightCard.querySelector("button").addEventListener("click", () => {
+            console.log("Close button clicked");
+            currentFlightId = null;
+            chatHistory.innerHTML = "";
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        });
+
+        chatHistory.innerHTML = "";
+        chatHistory.appendChild(flightCard);
+        chatHistory.scrollTop = 0;
+        console.log("Flight card added to chat");
 
     } catch (error) {
-        console.error("Error loading report:", error);
-        alert("Error loading report: " + error.message);
+        console.error("Error in viewReportDetail:", error);
+        alert("Error: " + error.message);
     }
 }
 
@@ -351,25 +467,28 @@ async function sendChatMessage() {
 
     if (!query) return;
 
-    // For general chat (greetings), flight selection is optional
-    const generalKeywords = ["hi", "hello", "hey", "help", "what can you do", "how does this work"];
-    const isGeneralChat = generalKeywords.some(kw => query.toLowerCase().includes(kw));
-
-    if (!currentFlightId && !isGeneralChat) {
-        chatError.textContent = "Please select a flight first to ask flight-specific questions";
-        chatError.classList.remove("hidden");
+    if (!currentFlightId) {
+        chatError.textContent = "⚠️ Please select a flight from the list first to start chatting!";
+        chatError.style.display = "block";
+        chatError.style.backgroundColor = "#ffe0e0";
+        chatError.style.color = "#cc0000";
+        chatError.style.padding = "0.75rem";
+        chatError.style.borderRadius = "8px";
+        chatError.style.marginBottom = "0.5rem";
         return;
     }
 
-    chatError.classList.add("hidden");
+    chatError.style.display = "none";
     chatInput.value = "";
     sendBtn.disabled = true;
 
     // Add user message to chat
     const userMsg = document.createElement("div");
-    userMsg.className = "flex justify-end";
+    userMsg.style.display = "flex";
+    userMsg.style.justifyContent = "flex-end";
+    userMsg.style.marginBottom = "0.5rem";
     userMsg.innerHTML = `
-        <div style="background-color: #2a1f0f; color: #ff9f43;" class="rounded-lg px-4 py-3 max-w-xs">
+        <div style="background-color: #ff9f43; color: #000000; border-radius: 8px; padding: 0.75rem 1rem; max-width: 70%; word-wrap: break-word;">
             ${escapeHtml(query)}
         </div>
     `;
@@ -378,9 +497,11 @@ async function sendChatMessage() {
 
     // Show loading
     const loadingMsg = document.createElement("div");
-    loadingMsg.className = "flex justify-start";
+    loadingMsg.style.display = "flex";
+    loadingMsg.style.justifyContent = "flex-start";
+    loadingMsg.style.marginBottom = "0.5rem";
     loadingMsg.innerHTML = `
-        <div style="background-color: #1a2e2e; color: #888888; border-left: 3px solid #ff9f43;" class="rounded-lg px-4 py-3">
+        <div style="background-color: #f0f0f0; color: #000000; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #ff9f43;">
             ⏳ Searching flight reports and generating answer...
         </div>
     `;
@@ -388,21 +509,14 @@ async function sendChatMessage() {
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     try {
-        // For general chat, don't send flight_id
-        const requestBody = {
-            query: query,
-            n_results: 3
-        };
-
-        // Only add flight_id for flight-specific questions
-        if (!isGeneralChat && currentFlightId) {
-            requestBody.flight_id = currentFlightId;
-        }
-
         const response = await fetch("/api/search-rag", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                query: query,
+                flight_id: currentFlightId,
+                n_results: 3
+            })
         });
 
         const data = await response.json();
@@ -410,55 +524,25 @@ async function sendChatMessage() {
 
         if (data.success) {
             const assistantMsg = document.createElement("div");
-            assistantMsg.className = "flex justify-start";
-
-            // Clean up markdown formatting from LLM response
-            let cleanAnswer = data.answer
-                .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove **bold**
-                .replace(/\*([^*]+)\*/g, '$1')      // Remove *italic*
-                .replace(/###\s/g, '')               // Remove ### headers
-                .replace(/##\s/g, '')                // Remove ## headers
-                .replace(/#\s/g, '');                // Remove # headers
-
-            // Build sources section based on intent and results
-            let sourcesHtml = "";
-            let bgColor = "#1a2e2e";
-            let textColor = "#e0e0e0";
-            let borderColor = "#ff9f43";
-
-            if (data.intent === "GREETING") {
-                // Greeting responses
-                bgColor = "#2a1f0f";
-                borderColor = "#ff9f43";
-                sourcesHtml = `<p class="text-xs mt-2" style="color: #ff9f43;">💬 General chat</p>`;
-            } else if (data.is_general_chat) {
-                // General chat fallback
-                sourcesHtml = `<p class="text-xs mt-2 italic" style="color: #888888;">General assistance</p>`;
-            } else if (data.relevant_flights && data.relevant_flights.length > 0) {
-                // Search with results
-                bgColor = "#2a1f0f";
-                borderColor = "#ff9f43";
-                const flightList = data.relevant_flights
-                    .map((f, i) => `${f} (${(data.relevance_scores[i] * 100).toFixed(0)}%)`)
-                    .join(", ");
-                sourcesHtml = `<p class="text-xs mt-2" style="color: #ff9f43;">📍 Based on: ${flightList}</p>`;
-            } else {
-                // Search with no results
-                sourcesHtml = `<p class="text-xs mt-2" style="color: #ffa500;">⚠️ No matching flight data found</p>`;
-            }
-
+            assistantMsg.style.display = "flex";
+            assistantMsg.style.justifyContent = "flex-start";
+            assistantMsg.style.marginBottom = "0.75rem";
             assistantMsg.innerHTML = `
-                <div class="rounded-lg px-4 py-3 max-w-lg" style="background-color: ${bgColor}; color: ${textColor}; border-left: 3px solid ${borderColor};">
-                    <div>${escapeHtml(cleanAnswer)}</div>
-                    ${sourcesHtml}
+                <div style="background-color: #ffffff; color: #000000; border-radius: 8px; padding: 0.75rem 1rem; max-width: 70%; word-wrap: break-word; border-left: 4px solid #ff9f43; border: 1px solid #ff9f43; line-height: 1.5;">
+                    <div style="color: #000000; font-size: 0.95rem;">${escapeHtml(data.answer)}</div>
+                    <p style="font-size: 0.75rem; color: #666666; margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #f0f0f0;">
+                        📍 Based on: ${data.relevant_flights.join(", ")}
+                    </p>
                 </div>
             `;
             chatHistory.appendChild(assistantMsg);
         } else {
             const errorMsg = document.createElement("div");
-            errorMsg.className = "flex justify-start";
+            errorMsg.style.display = "flex";
+            errorMsg.style.justifyContent = "flex-start";
+            errorMsg.style.marginBottom = "0.5rem";
             errorMsg.innerHTML = `
-                <div class="bg-red-100 text-red-800 rounded-lg px-4 py-3">
+                <div style="background-color: #ffe0e0; color: #cc0000; border-radius: 8px; padding: 0.75rem 1rem;">
                     ❌ ${escapeHtml(data.error)}
                 </div>
             `;
@@ -470,9 +554,11 @@ async function sendChatMessage() {
     } catch (error) {
         loadingMsg.remove();
         const errorMsg = document.createElement("div");
-        errorMsg.className = "flex justify-start";
+        errorMsg.style.display = "flex";
+        errorMsg.style.justifyContent = "flex-start";
+        errorMsg.style.marginBottom = "0.5rem";
         errorMsg.innerHTML = `
-            <div class="bg-red-100 text-red-800 rounded-lg px-4 py-3">
+            <div style="background-color: #ffe0e0; color: #cc0000; border-radius: 8px; padding: 0.75rem 1rem;">
                 ❌ Error: ${escapeHtml(error.message)}
             </div>
         `;
@@ -507,7 +593,7 @@ async function loadFleetSummary() {
                     <p class="text-sm text-gray-600">Avg Flight Duration</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-2xl font-bold text-orange-500">${summary.avg_peak_vibration.toFixed(4)}</p>
+                    <p class="text-2xl font-bold text-green-600">${summary.avg_peak_vibration.toFixed(4)}</p>
                     <p class="text-sm text-gray-600">Avg Peak Vibration</p>
                 </div>
             `;

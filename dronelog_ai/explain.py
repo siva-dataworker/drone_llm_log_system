@@ -3,7 +3,29 @@ import requests
 import json
 from typing import Dict, List
 
+# Try to load from environment, then from .env file
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+
+if not OPENROUTER_API_KEY:
+    try:
+        import dotenv
+        dotenv.load_dotenv()
+        OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+    except:
+        # Fallback: read .env file manually
+        try:
+            env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+            if os.path.exists(env_path):
+                with open(env_path, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and "=" in line and not line.startswith("#"):
+                            key, value = line.split("=", 1)
+                            if key.strip() == "OPENROUTER_API_KEY":
+                                OPENROUTER_API_KEY = value.strip()
+                                break
+        except:
+            pass
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
