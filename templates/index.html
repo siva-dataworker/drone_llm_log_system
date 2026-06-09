@@ -284,7 +284,11 @@
 
             #qa-container > div {
                 width: 100% !important;
-                margin-bottom: 1rem;
+                margin-bottom: 1rem !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                display: block !important;
             }
 
             #reportsList {
@@ -494,6 +498,38 @@
             .col-span-2 { grid-column: span 1; }
             .col-span-3 { grid-column: span 1; }
             .px-6 { padding-left: 1rem; padding-right: 1rem; }
+        }
+
+        /* CRITICAL: Force chat area visibility on mobile */
+        @media (max-width: 768px) {
+            #qa-container > div:last-child {
+                display: block !important;
+                overflow: visible !important;
+                height: auto !important;
+                width: 100% !important;
+            }
+
+            #chatHistory {
+                display: block !important;
+                width: 100% !important;
+                height: 250px !important;
+            }
+
+            /* Chat input wrapper */
+            #qa-container > div:last-child > div:last-child {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+
+            #chatInput {
+                width: 100% !important;
+            }
+
+            #sendBtn {
+                width: 100% !important;
+                margin-top: 0.5rem;
+            }
         }
     </style>
 </head>
