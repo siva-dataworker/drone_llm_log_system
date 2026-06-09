@@ -712,6 +712,50 @@
         </div>
     </div>
 
+    <!-- Mobile Testing Warning Modal -->
+    <div id="mobileWarningModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+        <div style="background-color: #ffffff; border-radius: 12px; padding: 2rem; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <p style="font-size: 3rem; margin: 0 0 1rem 0;">📱</p>
+            <h2 style="color: #ff9f43; margin: 0 0 1rem 0; font-size: 1.5rem;">Testing Phase Notice</h2>
+            <p style="color: #666666; margin: 0 0 1.5rem 0; line-height: 1.6;">
+                Dronelog AI is currently in <strong>testing phase</strong>. For the best experience, we recommend using a <strong>laptop or desktop</strong>.
+            </p>
+            <p style="color: #999999; font-size: 0.875rem; margin: 0 0 1.5rem 0;">
+                Mobile support will be fully optimized soon!
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="document.getElementById('mobileWarningModal').style.display='none'" style="background-color: #ff9f43; color: #000000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Continue on Mobile
+                </button>
+                <a href="#" onclick="if(navigator.userAgent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i)){alert('Please open on a desktop or laptop browser');return false;}" style="background-color: #f0f0f0; color: #000000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">
+                    Use Desktop →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show mobile warning on mobile devices
+        function detectMobileAndShowWarning() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSmallScreen = window.innerWidth < 768;
+
+            if (isMobile || isSmallScreen) {
+                document.getElementById('mobileWarningModal').style.display = 'flex';
+            }
+        }
+
+        // Check on page load
+        window.addEventListener('load', detectMobileAndShowWarning);
+
+        // Also check on resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                document.getElementById('mobileWarningModal').style.display = 'none';
+            }
+        });
+    </script>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
