@@ -123,8 +123,8 @@
                 grid-template-columns: 1fr !important;
             }
 
-            /* Make all flex containers stack on mobile */
-            div[style*="display: flex"] {
+            /* Make all flex containers stack on mobile - but preserve important ones */
+            div[style*="display: flex"]:not(#chatHistory):not([id*="chatHistory"]) {
                 flex-direction: column !important;
             }
 
@@ -277,40 +277,78 @@
                 grid-template-columns: 1fr !important;
                 height: auto !important;
                 gap: 1rem !important;
+                display: block !important;
+            }
+
+            #qa-container > div {
+                width: 100% !important;
+                margin-bottom: 1rem;
             }
 
             #reportsList {
-                max-height: 250px !important;
+                max-height: 200px !important;
+                overflow-y: auto !important;
             }
 
             #chatHistory {
-                min-height: 300px !important;
-                max-height: 400px !important;
+                height: auto !important;
+                min-height: 200px !important;
+                max-height: 250px !important;
+                overflow-y: auto !important;
             }
 
-            /* Stack chat input on mobile */
-            #qa-container > div:last-child {
-                flex-direction: column;
+            /* Make chat input visible and full width */
+            #chatInput {
+                width: 100% !important;
+                display: block !important;
+            }
+
+            /* Ensure chat area is visible */
+            #qa-container > div:nth-child(2) {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            /* Ensure send button is visible */
+            button[id="sendBtn"] {
+                display: inline-block !important;
+                width: auto !important;
             }
         }
 
         @media (max-width: 480px) {
             #qa-container {
-                gap: 0.75rem !important;
+                gap: 0.5rem !important;
+                display: block !important;
             }
 
             #reportsList {
-                max-height: 200px !important;
+                max-height: 150px !important;
             }
 
             #chatHistory {
-                min-height: 200px !important;
-                max-height: 300px !important;
+                min-height: 150px !important;
+                max-height: 200px !important;
             }
 
             /* Reduce padding on mobile */
             div[style*="padding: 1rem"] {
                 padding: 0.75rem !important;
+            }
+
+            /* Chat input row on mobile */
+            div[style*="display: flex"] {
+                flex-wrap: wrap !important;
+            }
+
+            /* Full width chat on mobile */
+            #chatInput {
+                width: 100% !important;
+                margin-bottom: 0.5rem;
+            }
+
+            button[id="sendBtn"] {
+                width: 100% !important;
             }
         }
 
