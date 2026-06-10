@@ -24,5 +24,3 @@ def bin_to_csv(bin_path, csv_path):
     print(f"Done — {len(df)} rows saved to {csv_path}")
     return df
 
-# Test it
-bin_to_csv(r"E:\Dronelog_ai\dronelog_ai\bin_files\flight7.bin", r"E:\Dronelog_ai\dronelog_ai\csv_files\flight7.csv")
