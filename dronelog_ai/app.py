@@ -13,7 +13,7 @@ from dronelog_ai.database import (
     search_chromadb, get_fleet_summary
 )
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+app = Flask(__name__, template_folder='dronelog_ai/templates', static_folder='dronelog_ai/static')
 
 # Config
 UPLOAD_FOLDER = "dronelog_ai/uploads"
