@@ -6,6 +6,7 @@ console.log("main.js loaded!");
 
 // ──── STATE ────────────────────────────────────────────
 let currentFlightId = null;
+let selectedFlightIds = []; // Array for multiple selections
 let uploadedFile = null;
 
 // Get upload elements immediately
@@ -332,29 +333,34 @@ async function loadReports() {
                 </div>
             `;
 
-            // Attach click handler with explicit function
+            // Attach click handler for multiple selection
             const handleCardClick = function() {
                 console.log("🔥 CARD CLICKED:", report.flight_id);
 
-                // Remove selection from all cards
-                document.querySelectorAll(".report-card").forEach(c => {
-                    c.classList.remove("selected");
-                    const badge = c.querySelector(".selection-badge");
+                // Toggle selection
+                const index = selectedFlightIds.indexOf(report.flight_id);
+                if (index > -1) {
+                    // Already selected, remove it
+                    selectedFlightIds.splice(index, 1);
+                    card.classList.remove("selected");
+                    const badge = card.querySelector(".selection-badge");
                     if (badge) {
                         badge.style.display = "none";
                     }
-                });
-
-                // Add selected class to this card
-                card.classList.add("selected");
-                const badge = card.querySelector(".selection-badge");
-                if (badge) {
-                    badge.style.display = "block";
-                    console.log("✅ Badge shown for:", report.flight_id);
+                    console.log("❌ Deselected:", report.flight_id);
+                } else {
+                    // Not selected, add it
+                    selectedFlightIds.push(report.flight_id);
+                    card.classList.add("selected");
+                    const badge = card.querySelector(".selection-badge");
+                    if (badge) {
+                        badge.style.display = "block";
+                    }
+                    console.log("✅ Selected:", report.flight_id);
                 }
 
-                console.log("📍 Calling viewReportDetail for:", report.flight_id);
-                viewReportDetail(report.flight_id);
+                // Update chat display
+                updateSelectedFlightsDisplay();
             };
 
             card.addEventListener("click", handleCardClick);
@@ -441,9 +447,79 @@ async function viewReportDetail(flightId) {
     }
 }
 
+// Display all selected flights in chat box
+async function updateSelectedFlightsDisplay() {
+    const chatHistory = document.getElementById("chatHistory");
+    chatHistory.innerHTML = "";
+
+    if (selectedFlightIds.length === 0) {
+        chatHistory.innerHTML = '<p style="color: #999999; text-align: center; padding: 2rem;">Select flights from the list to start chatting</p>';
+        currentFlightId = null;
+        return;
+    }
+
+    // Set first selected flight as current for chat
+    currentFlightId = selectedFlightIds[0];
+
+    // Create header for selected flights
+    const header = document.createElement("div");
+    header.style.marginBottom = "1rem";
+
+    // Add each selected flight
+    for (const flightId of selectedFlightIds) {
+        try {
+            const response = await fetch(`/api/report/${flightId}`);
+            const data = await response.json();
+
+            if (!data.success) continue;
+
+            const flightCard = document.createElement("div");
+            flightCard.style.backgroundColor = "#fff4e6";
+            flightCard.style.border = "2px solid #ff9f43";
+            flightCard.style.borderRadius = "8px";
+            flightCard.style.padding = "1rem";
+            flightCard.style.marginBottom = "0.75rem";
+            flightCard.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <p style="font-weight: 600; color: #ff9f43; font-size: 0.95rem;">📌 ${selectedFlightIds.length > 1 ? '📍' : '📌'} Flight ${selectedFlightIds.indexOf(flightId) + 1}</p>
+                        <p style="color: #000000; font-weight: 600; margin-top: 0.25rem; font-size: 0.9rem;">${data.flight_id}</p>
+                        <p style="color: #666666; font-size: 0.875rem; margin-top: 0.25rem;">${new Date(data.timestamp).toLocaleString()}</p>
+                    </div>
+                    <button onclick="removeSelectedFlight('${flightId}')" style="background-color: #ff9f43; color: #000000; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; font-weight: bold;">✕</button>
+                </div>
+            `;
+            chatHistory.appendChild(flightCard);
+        } catch (error) {
+            console.error("Error loading flight:", flightId, error);
+        }
+    }
+}
+
+// Remove a flight from selection
+function removeSelectedFlight(flightId) {
+    const index = selectedFlightIds.indexOf(flightId);
+    if (index > -1) {
+        selectedFlightIds.splice(index, 1);
+    }
+
+    // Update card styling
+    const card = document.getElementById(`report-${flightId}`);
+    if (card) {
+        card.classList.remove("selected");
+        const badge = card.querySelector(".selection-badge");
+        if (badge) {
+            badge.style.display = "none";
+        }
+    }
+
+    updateSelectedFlightsDisplay();
+}
+
 document.getElementById("closeDetailBtn").addEventListener("click", () => {
     document.getElementById("reportDetail").classList.add("hidden");
     currentFlightId = null;
+    selectedFlightIds = [];
     document.getElementById("chatHistory").innerHTML = "";
 });
 

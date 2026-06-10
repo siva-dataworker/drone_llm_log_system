@@ -39,9 +39,12 @@
             box-shadow: 0 4px 12px rgba(255, 159, 67, 0.25);
         }
         .report-card.selected {
-            background-color: #fff5e6;
-            border-left-color: #ff9f43;
-            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.3);
+            background-color: #fff4e6 !important;
+            border-left: 4px solid #ff9f43 !important;
+            border: 2px solid #ff8c1a !important;
+            box-shadow: 0 0 0 3px #ff9f43, inset 0 0 0 1px #ff9f43 !important;
+            transform: scale(1.02);
+            transition: all 0.2s ease;
         }
 
         .fault-badge {
@@ -80,6 +83,296 @@
             background-color: #ffffff !important;
             color: #000000 !important;
             border-color: #ff9f43 !important;
+            font-size: 16px; /* Prevent zoom on mobile input focus */
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            header p {
+                font-size: 0.875rem;
+            }
+
+            .tab-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            /* Mobile: Stack layout vertically */
+            .grid {
+                display: block !important;
+            }
+
+            .col-span-2, .col-span-1 {
+                width: 100% !important;
+            }
+
+            /* Responsive upload section */
+            div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Make all flex containers stack on mobile - but preserve important ones */
+            div[style*="display: flex"]:not(#chatHistory):not([id*="chatHistory"]) {
+                flex-direction: column !important;
+            }
+
+            /* Mobile-friendly card padding */
+            div[style*="border: 1px solid #ff9f43"] {
+                padding: 0.75rem !important;
+                margin: 0.5rem 0 !important;
+            }
+
+            /* Responsive text sizes */
+            h2 {
+                font-size: 1.25rem !important;
+            }
+
+            h3 {
+                font-size: 1rem !important;
+            }
+
+            p {
+                font-size: 0.875rem;
+            }
+
+            /* Mobile-friendly buttons */
+            button {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.875rem;
+                min-height: 44px; /* Touch-friendly size */
+            }
+
+            /* Responsive input fields */
+            input[type="text"],
+            input[type="file"],
+            textarea {
+                width: 100% !important;
+                padding: 0.75rem !important;
+                font-size: 16px;
+            }
+
+            /* Mobile-friendly report list */
+            #reportsList {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            /* Chat history responsive */
+            #chatHistory {
+                height: 200px;
+                overflow-y: auto;
+            }
+
+            #chatInput {
+                width: calc(100% - 70px);
+                margin-right: 0.5rem;
+            }
+
+            /* Reduce spacing on mobile */
+            div[style*="padding: 2rem"] {
+                padding: 1rem !important;
+            }
+
+            div[style*="padding: 1.5rem"] {
+                padding: 0.75rem !important;
+            }
+
+            /* Mobile-friendly grid layout */
+            div[style*="grid"] {
+                gap: 0.5rem !important;
+            }
+
+            /* Responsive feature cards */
+            div[style*="background-color: #fffaf5"] {
+                width: 100% !important;
+            }
+
+            /* Touch-friendly close buttons */
+            button[style*="width: 36px"] {
+                width: 44px !important;
+                height: 44px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .tab-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.75rem;
+            }
+
+            button {
+                padding: 0.4rem 0.8rem !important;
+                font-size: 0.75rem;
+            }
+
+            /* Extra small mobile */
+            div[style*="padding: 1rem"] {
+                padding: 0.5rem !important;
+            }
+
+            #reportsList {
+                max-height: 200px;
+            }
+
+            #chatHistory {
+                height: 150px;
+            }
+        }
+
+        /* Tablet optimizations (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            div[style*="grid-template-columns: 350px"] {
+                grid-template-columns: 250px 1fr !important;
+            }
+
+            .report-card {
+                padding: 0.75rem !important;
+            }
+        }
+
+        /* Large desktop (1024px+) */
+        @media (min-width: 1024px) {
+            div[style*="padding: 2rem"] {
+                padding: 2rem;
+            }
+
+            .report-card:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        /* Q&A Responsive Layout */
+        #qa-container {
+            display: grid !important;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+            min-height: calc(100vh - 200px);
+        }
+
+        @media (max-width: 1024px) {
+            #qa-container {
+                grid-template-columns: 300px 1fr !important;
+                min-height: calc(100vh - 180px) !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #qa-container {
+                grid-template-columns: 1fr !important;
+                min-height: auto !important;
+                height: auto !important;
+                gap: 1rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            #qa-container > div {
+                width: 100% !important;
+                margin-bottom: 1rem !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            #reportsList {
+                max-height: 200px !important;
+                overflow-y: auto !important;
+            }
+
+            #chatHistory {
+                height: auto !important;
+                min-height: 200px !important;
+                max-height: 250px !important;
+                overflow-y: auto !important;
+            }
+
+            /* Make chat input visible and full width */
+            #chatInput {
+                width: 100% !important;
+                display: block !important;
+            }
+
+            /* Ensure chat area is visible */
+            #qa-container > div:nth-child(2) {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            /* Ensure send button is visible */
+            button[id="sendBtn"] {
+                display: inline-block !important;
+                width: auto !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #qa-container {
+                gap: 0.5rem !important;
+                display: block !important;
+            }
+
+            #reportsList {
+                max-height: 150px !important;
+            }
+
+            #chatHistory {
+                min-height: 150px !important;
+                max-height: 200px !important;
+            }
+
+            /* Reduce padding on mobile */
+            div[style*="padding: 1rem"] {
+                padding: 0.75rem !important;
+            }
+
+            /* Chat input row on mobile */
+            div[style*="display: flex"] {
+                flex-wrap: wrap !important;
+            }
+
+            /* Full width chat on mobile */
+            #chatInput {
+                width: 100% !important;
+                margin-bottom: 0.5rem;
+            }
+
+            button[id="sendBtn"] {
+                width: 100% !important;
+            }
+        }
+
+        /* Mobile-friendly upload section */
+        @media (max-width: 768px) {
+            .grid.grid-cols-3 {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+
+            .col-span-2 {
+                grid-column: span 1 !important;
+            }
+
+            #featuresList {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+                gap: 0.75rem !important;
+            }
         }
         input:focus, textarea:focus {
             background-color: #fffaf5 !important;
@@ -205,6 +498,38 @@
             .col-span-2 { grid-column: span 1; }
             .col-span-3 { grid-column: span 1; }
             .px-6 { padding-left: 1rem; padding-right: 1rem; }
+        }
+
+        /* CRITICAL: Force chat area visibility on mobile */
+        @media (max-width: 768px) {
+            #qa-container > div:last-child {
+                display: block !important;
+                overflow: visible !important;
+                height: auto !important;
+                width: 100% !important;
+            }
+
+            #chatHistory {
+                display: block !important;
+                width: 100% !important;
+                height: 250px !important;
+            }
+
+            /* Chat input wrapper */
+            #qa-container > div:last-child > div:last-child {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+
+            #chatInput {
+                width: 100% !important;
+            }
+
+            #sendBtn {
+                width: 100% !important;
+                margin-top: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -342,9 +667,9 @@
 
         <!-- ====== Q&A TAB ====== -->
         <div id="qa" class="tab-content">
-            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; height: calc(100vh - 200px);">
+            <div id="qa-container" style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; height: calc(100vh - 200px);">
                 <!-- Reports Sidebar -->
-                <div style="background-color: #ffffff; border: 1px solid #ff9f43; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="background-color: #ffffff; border: 1px solid #ff9f43; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-width: 0;">
                     <div style="background-color: #fffaf5; border-bottom: 1px solid #ff9f43; padding: 1rem;">
                         <h3 style="font-weight: bold; color: #ff9f43;">📝 Flight Reports</h3>
                         <p style="font-size: 0.75rem; color: #666666; margin-top: 0.25rem;">Click to view details</p>
@@ -353,7 +678,7 @@
                 </div>
 
                 <!-- Chat Area -->
-                <div style="background-color: #ffffff; border: 1px solid #ff9f43; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                <div style="background-color: #ffffff; border: 1px solid #ff9f43; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; min-width: 0;">
                     <!-- Report Detail -->
                     <div id="reportDetail" style="border-bottom: 1px solid #ff9f43; padding: 1.5rem; max-height: 33%; overflow-y: auto; display: none;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
@@ -386,6 +711,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Mobile Testing Warning Modal -->
+    <div id="mobileWarningModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+        <div style="background-color: #ffffff; border-radius: 12px; padding: 2rem; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <p style="font-size: 3rem; margin: 0 0 1rem 0;">📱</p>
+            <h2 style="color: #ff9f43; margin: 0 0 1rem 0; font-size: 1.5rem;">Testing Phase Notice</h2>
+            <p style="color: #666666; margin: 0 0 1.5rem 0; line-height: 1.6;">
+                Dronelog AI is currently in <strong>testing phase</strong>. For the best experience, we recommend using a <strong>laptop or desktop</strong>.
+            </p>
+            <p style="color: #999999; font-size: 0.875rem; margin: 0 0 1.5rem 0;">
+                Mobile support will be fully optimized soon!
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="document.getElementById('mobileWarningModal').style.display='none'" style="background-color: #ff9f43; color: #000000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Continue on Mobile
+                </button>
+                <a href="#" onclick="if(navigator.userAgent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i)){alert('Please open on a desktop or laptop browser');return false;}" style="background-color: #f0f0f0; color: #000000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">
+                    Use Desktop →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show mobile warning on mobile devices
+        function detectMobileAndShowWarning() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSmallScreen = window.innerWidth < 768;
+
+            if (isMobile || isSmallScreen) {
+                document.getElementById('mobileWarningModal').style.display = 'flex';
+            }
+        }
+
+        // Check on page load
+        window.addEventListener('load', detectMobileAndShowWarning);
+
+        // Also check on resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                document.getElementById('mobileWarningModal').style.display = 'none';
+            }
+        });
+    </script>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
