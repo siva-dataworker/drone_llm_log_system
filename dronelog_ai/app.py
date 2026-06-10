@@ -22,7 +22,7 @@ app = Flask(__name__, template_folder=template_folder, static_folder=static_fold
 
 # Config
 UPLOAD_FOLDER = "dronelog_ai/uploads"
-ALLOWED_EXTENSIONS = {"bin"}
+ALLOWED_EXTENSIONS = {"bin", "csv"}
 MAX_FILE_SIZE = 500 * 1024 * 1024  # 500 MB
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -49,7 +49,7 @@ def index():
 @app.route("/api/upload-bin", methods=["POST"])
 def upload_bin():
     """
-    Upload and process a .bin flight log file.
+    Upload and process a .bin or .csv flight log file.
     Returns: Flight analysis with report
     """
 
@@ -62,21 +62,28 @@ def upload_bin():
         return jsonify({"error": "No file selected"}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({"error": "Only .bin files allowed"}), 400
+        return jsonify({"error": "Only .bin or .csv files allowed"}), 400
 
     try:
-        # Save uploaded file
+        import pandas as pd
+
         flight_id = f"flight_{uuid.uuid4().hex[:8]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         filename = secure_filename(file.filename)
-        bin_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{flight_id}.bin")
-        file.save(bin_path)
+        file_ext = filename.rsplit(".", 1)[1].lower()
 
-        # Step 1: Convert .bin to CSV
         csv_path = os.path.join("dronelog_ai/csv_files", f"{flight_id}.csv")
-        bin_to_csv(bin_path, csv_path)
+
+        # Step 1: Handle .bin or .csv
+        if file_ext == "bin":
+            # Convert .bin to CSV
+            bin_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{flight_id}.bin")
+            file.save(bin_path)
+            bin_to_csv(bin_path, csv_path)
+        else:
+            # For CSV, save directly
+            file.save(csv_path)
 
         # Step 2: Extract features and run RCA
-        import pandas as pd
         df = pd.read_csv(csv_path)
         features = extract_features(df)
         faults = run_rca(features)
